@@ -1,0 +1,49 @@
+image: cypress/browsers:node-20.14.0-chrome-126.0.6478.114-1-ff-127.0.1-edge-126.0.2592.61-1
+
+stages:
+  - test
+  - merge_reports
+
+🚀 run_cypress_set1:
+  stage: test
+  needs: []
+  script:
+    - npm ci
+    - npm run cypress:ci:set1
+    - npx mochawesome-merge cypress/results/*.json -o cypress-combined-report-$CI_JOB_ID.json || true
+    - ls -l -a
+  artifacts:
+    when: always
+    paths:
+      - cypress-combined-report-*
+    expire_in: 1 day
+
+🚀 run_cypress_set2:
+  stage: test
+  needs: []
+  script:
+    - npm ci
+    - npm run cypress:ci:set2
+    - npx mochawesome-merge cypress/results/*.json -o cypress-combined-report-$CI_JOB_ID.json || true
+    - ls -l -a
+  artifacts:
+    when: always
+    paths:
+      - cypress-combined-report-*
+    expire_in: 1 day
+
+📕 merge_reports:
+  stage: merge_reports
+  needs:
+    - job: '🚀 run_cypress_set1'
+      artifacts: true
+    - job: '🚀 run_cypress_set2'
+      artifacts: true
+  script:
+    - ls -l -a
+    - npx mochawesome-merge cypress-combined-report-*.json -o cypress-combined-report.json
+  artifacts:
+    when: always
+    paths:
+      - cypress-combined-report.json
+    expire_in: 1 day
