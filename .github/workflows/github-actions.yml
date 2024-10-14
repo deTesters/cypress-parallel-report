@@ -1,0 +1,63 @@
+name: Cypress Tests
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    cypress-set1:
+        runs-on: ubuntu-latest
+        container: cypress/browsers:node-20.14.0-chrome-126.0.6478.114-1-ff-127.0.1-edge-126.0.2592.61-1
+        steps:
+            - uses: actions/checkout@v3
+            - name: Run Cypress Set 1
+              run: |
+                  npm ci
+                  npm run cypress:ci:set1
+                  npx mochawesome-merge cypress/results/*.json -o cypress-combined-report-set1.json || true
+                  ls -l -a
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: cypress-report-set1
+                  path: cypress-combined-report-set1.json
+                  retention-days: 1
+
+    cypress-set2:
+        runs-on: ubuntu-latest
+        container: cypress/browsers:node-20.14.0-chrome-126.0.6478.114-1-ff-127.0.1-edge-126.0.2592.61-1
+        steps:
+            - uses: actions/checkout@v3
+            - name: Run Cypress Set 2
+              run: |
+                  npm ci
+                  npm run cypress:ci:set2
+                  npx mochawesome-merge cypress/results/*.json -o cypress-combined-report-set2.json || true
+                  ls -l -a
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: cypress-report-set2
+                  path: cypress-combined-report-set2.json
+                  retention-days: 1
+
+    merge-reports:
+        needs: [cypress-set1, cypress-set2]
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/download-artifact@v3
+              with:
+                  name: cypress-report-set1
+            - uses: actions/download-artifact@v3
+              with:
+                  name: cypress-report-set2
+            - name: Merge Reports
+              run: |
+                  ls -l -a
+                  npx mochawesome-merge cypress-combined-report-*.json -o cypress-combined-report.json
+            - uses: actions/upload-artifact@v3
+              with:
+                  name: cypress-combined-report
+                  path: cypress-combined-report.json
+                  retention-days: 1
